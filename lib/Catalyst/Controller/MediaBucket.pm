@@ -3,6 +3,8 @@ package Catalyst::Controller::MediaBucket;
 use warnings;
 use strict;
 
+use Class::C3::Adopt::NEXT -no_warn;
+
 use Media::Bucket;
 
 use base qw(Catalyst::Controller);
@@ -50,7 +52,21 @@ sub default :Path {
 		my @resources = $bucket->list_resources($id);
 		if (@resources) {
 			if (scalar @resources == 1) {
-				$c->response->redirect($resources[0]->uri);
+				$resource = $resources[0];
+				if ($resource->isa('Media::Bucket::Resource::Directory')) {
+					$c->response->redirect($resource->uri);
+				}
+				elsif ($resource->isa('Media::Bucket::Resource::File')) {
+					if ($resource->{id} =~ /(.+)\./g) {
+						my $hub_id = $1;
+						if ($id eq $hub_id) {
+							$c->response->body($resource->get_entry()->as_xml());
+						}
+						else {
+							$c->response->redirect($resource->uri); # TODO: Should redirect to hub
+						}
+					}
+				}
 			}
 			else {
 				$c->response->status(404);
