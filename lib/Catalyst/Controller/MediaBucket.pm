@@ -16,7 +16,7 @@ sub new {
 	return $self;
 }
 
-sub default :Path {
+sub default :Path :ActionClass('InitPage') {
 	my ($self, $c) = @_;
 	
 	my $bucket = $self->{bucket};
@@ -25,14 +25,16 @@ sub default :Path {
 		$c->response->status(403);
 		$c->response->content_type('text/html');
 		my $bucket_uri = $bucket->{uri};
-		$c->response->body("Forbidden, try <a href='$bucket_uri'>$bucket_uri</a>\n");
+		$c->response->body("Forbidden, please try <a href='$bucket_uri'>$bucket_uri</a>\n");
 		return;
 	}
 	my $resource = $bucket->get_resource($id);
 	if ($resource) {
 		if ($resource->isa('Media::Bucket::Resource::Directory')) {
 			if ($id =~ /\/$/ or not $id) {
-				$c->response->body($resource->get_feed()->as_xml());
+				#$c->response->body($resource->get_feed()->as_xml());
+				$c->stash->{page_elements}->{feed} = $resource->get_feed()->elem;
+				$c->stash->{template} = 'feed.xsl';
 			}
 			else {
 				$c->response->redirect($resource->uri . '/');				
@@ -60,7 +62,9 @@ sub default :Path {
 					if ($resource->{id} =~ /(.+)\./g) {
 						my $hub_id = $1;
 						if ($id eq $hub_id) {
-							$c->response->body($resource->get_entry()->as_xml());
+							#$c->response->body($resource->get_entry()->as_xml());
+							$c->stash->{page_elements}->{entry} = $resource->get_entry()->elem;
+							$c->stash->{template} = 'entry.xsl';
 						}
 						else {
 							$c->response->redirect($resource->uri); # TODO: Should redirect to hub
