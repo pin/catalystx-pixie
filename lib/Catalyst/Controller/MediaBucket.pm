@@ -34,7 +34,7 @@ sub default :Path :ActionClass('InitPage') {
 		if ($resource->isa('Media::Bucket::Resource::Directory')) {
 			if ($id =~ /\/$/ or not $id) {
 				#$c->response->body($resource->get_feed()->as_xml());
-				$c->stash->{page_elements}->{feed} = $resource->get_feed()->elem;
+				$c->stash->{page_elements}->{atom} = $resource->get_feed()->elem;
 				$c->stash->{template} = 'feed.xsl';
 			}
 			else {
@@ -65,7 +65,7 @@ sub default :Path :ActionClass('InitPage') {
 						my $hub_id = $1;
 						if ($id eq $hub_id) {
 							#$c->response->body($resource->get_entry()->as_xml());
-							$c->stash->{page_elements}->{entry} = $resource->get_entry()->elem;
+							$c->stash->{page_elements}->{atom} = $resource->get_entry()->elem;
 							$c->stash->{template} = 'entry.xsl';
 						}
 						else {

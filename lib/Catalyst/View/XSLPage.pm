@@ -33,6 +33,11 @@ sub render {
 		$c->response->content_type('text/xml');
 		return $c->stash->{xml}->serialize(1);
 	}
+	
+	if ($c->debug and $c->request->params->{atom} and exists $c->stash->{page_elements}->{atom}) {
+		$c->response->content_type('text/xml');
+		return $c->stash->{page_elements}->{atom}->serialize(1);
+	}
 
 	$self->NEXT::render(@_);
 };
