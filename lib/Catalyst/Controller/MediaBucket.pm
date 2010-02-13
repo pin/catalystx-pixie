@@ -44,9 +44,15 @@ sub default :Path :ActionClass('InitPage') {
 		elsif ($resource->isa('Media::Bucket::Resource::File')) {
 			my $mime_type = $resource->get_mime_type();
 			$c->response->content_type($mime_type);
-			my $th = $c->request->uri->query_param('th') || '4';
-			my $io = $resource->get_th_handle($th);
-			$c->response->body($io);
+			my $th = $c->request->uri->query_param('th');
+			if ($th) {
+				my $io = $resource->get_th_handle($th);
+				$c->response->body($io);		
+			}
+			else {
+				my $io = $resource->get_handle();
+				$c->response->body($io);				
+			}
 		}
 		else {
 			die 'hard';
