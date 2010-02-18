@@ -29,68 +29,47 @@ sub default :Path :ActionClass('InitPage') {
 		$c->response->body("Forbidden, please try <a href='$bucket_uri'>$bucket_uri</a>\n");
 		return;
 	}
-	my $resource = $bucket->get_resource($id);
+	
+	my $resource = $bucket->get($c->request->uri);
 	if ($resource) {
-		if ($resource->isa('Media::Bucket::Resource::Directory')) {
-			if ($id =~ /\/$/ or not $id) {
-				#$c->response->body($resource->get_feed()->as_xml());
-				$c->stash->{page_elements}->{atom} = $resource->get_feed()->elem;
-				$c->stash->{template} = 'feed.xsl';
-			}
-			else {
-				$c->response->redirect($resource->uri . '/');				
-			}
-		}
-		elsif ($resource->isa('Media::Bucket::Resource::File')) {
-			my $mime_type = $resource->get_mime_type();
+		if ($resource->isa('Media::Bucket::Resource::Object')) {
+			my $file = $resource->{file};
+			my $mime_type = $file->get_mime_type();
 			$c->response->content_type($mime_type);
 			my $th = $c->request->uri->query_param('th');
 			if ($th) {
-				my $io = $resource->get_th_handle($th);
+				my $io = $file->get_th_handle($th);
 				$c->response->body($io);		
 			}
 			else {
-				my $io = $resource->get_handle();
+				my $io = $file->get_handle();
 				$c->response->body($io);				
 			}
+		}
+		elsif ($resource->isa('Media::Bucket::Resource::File')) {
+			$c->stash->{page_elements}->{atom} = $resource->get_entry()->elem;
+			$c->stash->{template} = 'entry.xsl';
+		}
+		elsif ($resource->isa('Media::Bucket::Resource::Directory')) {
+			$c->stash->{page_elements}->{atom} = $resource->get_feed()->elem;
+			$c->stash->{template} = 'feed.xsl';
+		}
+		elsif ($resource->isa('Media::Bucket::Resource::NotFound')) {
+			$c->response->status(404);
+			$c->response->content_type('text/plain');
+			$c->response->body($resource->{message});			
+		}
+		elsif ($resource->isa('Media::Bucket::Resource::Redirect')) {
+			$c->response->redirect($resource->target_uri);
 		}
 		else {
 			die 'hard';
 		}
 	}
 	else {
-		my @resources = $bucket->list_resources($id);
-		if (@resources) {
-			if (scalar @resources == 1) {
-				$resource = $resources[0];
-				if ($resource->isa('Media::Bucket::Resource::Directory')) {
-					$c->response->redirect($resource->uri);
-				}
-				elsif ($resource->isa('Media::Bucket::Resource::File')) {
-					if ($resource->{id} =~ /(.+)\./g) {
-						my $hub_id = $1;
-						if ($id eq $hub_id) {
-							#$c->response->body($resource->get_entry()->as_xml());
-							$c->stash->{page_elements}->{atom} = $resource->get_entry()->elem;
-							$c->stash->{template} = 'entry.xsl';
-						}
-						else {
-							$c->response->redirect($resource->uri); # TODO: Should redirect to hub
-						}
-					}
-				}
-			}
-			else {
-				$c->response->status(404);
-				$c->response->content_type('text/plain');
-				$c->response->body("Resource Not Found\n");
-			}
-		}
-		else {
-			$c->response->status(404);
-			$c->response->content_type('text/plain');
-			$c->response->body("Resource Not Found\n");
-		}
+		$c->response->status(404);
+		$c->response->content_type('text/plain');
+		$c->response->body("Resource Not Found\n");
 	}
 }
 
