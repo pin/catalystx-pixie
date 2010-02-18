@@ -36,6 +36,9 @@ sub default :Path :ActionClass('InitPage') {
 			my $file = $resource->{file};
 			my $mime_type = $file->get_mime_type();
 			$c->response->content_type($mime_type);
+			my $modification_time = $file->get_modification_time();
+			my $last_modified_http_time = HTTP::Date::time2str($modification_time);
+			$c->response->header('Last-Modified', $last_modified_http_time);
 			my $th = $c->request->uri->query_param('th');
 			if ($th) {
 				my $io = $file->get_th_handle($th);
