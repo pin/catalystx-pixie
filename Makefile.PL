@@ -1,6 +1,10 @@
 use strict;
 use warnings;
+
 use ExtUtils::MakeMaker;
+#use File::ShareDir::Install;
+
+#install_share 'xsl';
 
 WriteMakefile(
     NAME                => 'CatalystX::Pixie',
@@ -11,7 +15,8 @@ WriteMakefile(
     PREREQ_PM => {
         'Test::More' => 0,
         'Media::Bucket' => 0,
-        'XML::LibXSLT' => 0
+        'XML::LibXSLT' => 0,
+        'File::ShareDir' => 0
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'CatalystX-Pixie-*' },

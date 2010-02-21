@@ -47,6 +47,10 @@ sub default :Path :ActionClass('InitPage') {
 	
 	my $user = eval {$c->user_exists ? $c->user->get("display") : undef};
 	
+	if ($c->request->method eq 'POST') {
+		$bucket->post($c->request->uri, $user, $c->request->params);
+	}
+	
 	my $resource = $bucket->get($c->request->uri, $user);
 	if ($resource) {
 		if ($resource->isa('Media::Bucket::Resource::Object')) {
