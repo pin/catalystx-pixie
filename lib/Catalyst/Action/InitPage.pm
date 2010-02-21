@@ -19,16 +19,18 @@ sub execute {
 
     $self->SUPER::execute(@_);
 
-#	my $user_element = XML::LibXML::Element->new('user');	
-#	$c->stash->{page_elements}->{user} = $user_element;
-#	if ($c->user_exists) {
-#		$user_element->setAttribute('name', $c->user->get("name"));
-#		$user_element->setAttribute('openid', $c->user->get("display"));
-#	}
-#	else {
-#		$user_element->setAttribute('name', 'test');
-#		$user_element->setAttribute('openid', 'test.ya.ru');		
-#	}
+	my $user_element = XML::LibXML::Element->new('user');	
+	$c->stash->{page_elements}->{user} = $user_element;
+	eval{
+		if ($c->user_exists) {
+			$user_element->setAttribute('name', $c->user->get("name"));
+			$user_element->setAttribute('openid', $c->user->get("display"));
+		}
+		else {
+#			$user_element->setAttribute('name', 'test');
+#			$user_element->setAttribute('openid', 'test.ya.ru');		
+		}
+	};
 }
 
 1;

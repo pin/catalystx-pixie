@@ -6,6 +6,7 @@ use warnings;
 use base 'Catalyst::View::XSLT';
 
 use XML::LibXML;
+use Class::C3::Adopt::NEXT -no_warn;
 use Scalar::Util qw/blessed/;
 
 sub render {

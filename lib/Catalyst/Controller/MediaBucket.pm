@@ -15,7 +15,13 @@ sub new {
 	my $self = $class->NEXT::new(@_);
 	my $buckets = {};
 	foreach my $bucket_url (keys %{$self->{bucket}}) {
-		$buckets->{$bucket_url} = Media::Bucket->new($bucket_url, $self->{bucket}->{$bucket_url}->{path});
+		unless (exists $self->{bucket}->{$bucket_url}->{path}) {
+			warn "missing path for bucket $bucket_url";
+			next;			
+		}
+		my $bucket_path = $self->{bucket}->{$bucket_url}->{path};
+		my $bucket_owner = exists $self->{bucket}->{$bucket_url}->{owner} ? $self->{bucket}->{$bucket_url}->{owner} : undef;
+		$buckets->{$bucket_url} = Media::Bucket->new($bucket_url, $bucket_path, $bucket_owner);
 	}
 	$self->{buckets} = $buckets;
 	return $self;
@@ -35,11 +41,13 @@ sub default :Path :ActionClass('InitPage') {
 	unless (defined $id) {
 		$c->response->status(403);
 		$c->response->content_type('text/html');
-		$c->response->body("Forbidden\n");
+		$c->response->body("Forbidden (bucket not configured here)\n");
 		return;
 	}
 	
-	my $resource = $bucket->get($c->request->uri);
+	my $user = eval {$c->user_exists ? $c->user->get("display") : undef};
+	
+	my $resource = $bucket->get($c->request->uri, $user);
 	if ($resource) {
 		if ($resource->isa('Media::Bucket::Resource::Object')) {
 			my $file = $resource->{file};
@@ -68,8 +76,9 @@ sub default :Path :ActionClass('InitPage') {
 		}
 		elsif ($resource->isa('Media::Bucket::Resource::NotFound')) {
 			$c->response->status(404);
-			$c->response->content_type('text/plain');
-			$c->response->body($resource->{message});			
+#			$c->response->content_type('text/plain');
+#			$c->response->body($resource->{message});	
+			$c->stash->{template} = 'common.xsl';		
 		}
 		elsif ($resource->isa('Media::Bucket::Resource::Redirect')) {
 			$c->response->redirect($resource->target_uri);
