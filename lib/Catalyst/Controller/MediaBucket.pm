@@ -13,20 +13,29 @@ use base qw(Catalyst::Controller);
 sub new {
 	my $class = shift;
 	my $self = $class->NEXT::new(@_);
-	$self->{bucket} = Media::Bucket->new($self->{bucket_url}, $self->{bucket_path});
+	my $buckets = {};
+	foreach my $bucket_url (keys %{$self->{bucket}}) {
+		$buckets->{$bucket_url} = Media::Bucket->new($bucket_url, $self->{bucket}->{$bucket_url}->{path});
+	}
+	$self->{buckets} = $buckets;
 	return $self;
 }
 
 sub default :Path :ActionClass('InitPage') {
 	my ($self, $c) = @_;
 	
-	my $bucket = $self->{bucket};
-	my $id = $bucket->get_id($c->request->uri);
+	my $bucket, my $id;
+	foreach my $b (values %{$self->{buckets}}) {
+		$id = $b->get_id($c->request->uri);
+		if (defined $id) {
+			$bucket = $b;
+			last;
+		}
+	}
 	unless (defined $id) {
 		$c->response->status(403);
 		$c->response->content_type('text/html');
-		my $bucket_uri = $bucket->{uri};
-		$c->response->body("Forbidden, please try <a href='$bucket_uri'>$bucket_uri</a>\n");
+		$c->response->body("Forbidden\n");
 		return;
 	}
 	
