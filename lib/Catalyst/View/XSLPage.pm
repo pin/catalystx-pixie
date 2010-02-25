@@ -37,7 +37,9 @@ sub render {
 	
 	if ($c->debug and $c->request->params->{atom} and exists $c->stash->{page_elements}->{atom}) {
 		$c->response->content_type('text/xml');
-		return $c->stash->{page_elements}->{atom}->serialize(1);
+		my $doc = XML::LibXML::Document->createDocument('1.0', 'utf-8');
+		$doc->setDocumentElement($c->stash->{page_elements}->{atom});
+		return $doc->serialize(1);
 	}
 
 	$self->NEXT::render(@_);
